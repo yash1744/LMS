@@ -132,7 +132,7 @@ class _Page6aState extends State<Page6a> {
                     submitUsingNothing(widget.databaseConnection);
                   }
                 },
-                child: const Text('Save'),
+                child: const Text('Search'),
               ),
               Expanded(
                 child: SingleChildScrollView(

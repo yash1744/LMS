@@ -14,6 +14,8 @@ class _Page3State extends State<Page3> {
   bool _isLoading = false;
   List<String> _publisherList = ["None"];
   String _publisherValue = "None";
+  String error = "";
+
   final _bookController = TextEditingController();
   final _authorController = TextEditingController();
 
@@ -25,22 +27,24 @@ class _Page3State extends State<Page3> {
   }
 
   void submit(MySqlConnection? connection) async {
+    setState(() {
+      error = "";
+    });
     try {
       if (connection != null) {
-        connection.transaction((conn) async {
-          await connection.query("""
+        await connection.query("""
             INSERT BOOK(Title,Book_Publisher)
             VALUES (?,?);       
       """, [_bookController.text, _publisherValue]);
-          await connection.query("""
+        await connection.query("""
             INSERT INTO BOOK_COPIES
             SELECT (SELECT Book_Id from BOOK b where b.Title = ?),Branch_Id,5 FROM LIBRARY_BRANCH;
       """, [_bookController.text]);
-          await connection.query("""
+        await connection.query("""
             INSERT BOOK_AUTHORS(Book_Id,Author_Name)
             VALUES((SELECT Book_Id FROM BOOK WHERE Title = ? ) ,?);""",
-              [_bookController.text, _authorController.text]);
-        });
+            [_bookController.text, _authorController.text]);
+
         print("Success");
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -50,6 +54,9 @@ class _Page3State extends State<Page3> {
       }
     } on MySqlException catch (e) {
       print(e.message);
+      setState(() {
+        error = "Book Title already exists";
+      });
     }
   }
 
@@ -146,8 +153,14 @@ class _Page3State extends State<Page3> {
                           submit(widget.databaseConnection);
                         }
                       },
-                      child: const Text('Save'),
+                      child: const Text('Submit'),
                     ),
+                    error.isNotEmpty
+                        ? Text(
+                            error,
+                            style: const TextStyle(color: Colors.red),
+                          )
+                        : const SizedBox.shrink(),
                   ],
                 ),
               ),

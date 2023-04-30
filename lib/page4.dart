@@ -129,7 +129,7 @@ group by Branch_Name;""", [_bookValue]);
                         // Navigator.pop(context);
                         getLoansPerBranch(widget.databaseConnection);
                       },
-                      child: const Text('Save'),
+                      child: const Text('Search'),
                     ),
                     const SizedBox(height: 16.0),
                     columns.isEmpty || rows.isEmpty

@@ -15,6 +15,7 @@ class _Page2State extends State<Page2> {
   final _addressController = TextEditingController();
   final _phoneController = TextEditingController();
   final String _statusValue = 'Available';
+  String error = "";
   final List<String> _statusList = ['Available', 'Reserved', 'Borrowed'];
   late var output;
   @override
@@ -31,6 +32,10 @@ class _Page2State extends State<Page2> {
   }
 
   void submit(MySqlConnection? connection) async {
+    setState(() {
+      // _isLoading = true;
+      error = "";
+    });
     try {
       if (connection != null) {
         await connection.query("""
@@ -59,8 +64,10 @@ class _Page2State extends State<Page2> {
               duration: const Duration(seconds: 5)),
         );
       }
-    } on MySqlException catch (e) {
-      print(e.message);
+    } on MySqlException {
+      setState(() {
+        error = "Combination of Name, Address and Phone already exists";
+      });
     }
   }
 
@@ -68,7 +75,7 @@ class _Page2State extends State<Page2> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Borrower '),
+        title: const Text('Add a Borrower '),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -113,11 +120,18 @@ class _Page2State extends State<Page2> {
               ElevatedButton(
                 onPressed: () {
                   if (_formKey.currentState!.validate()) {
+                    FocusScope.of(context).unfocus();
                     submit(widget.databaseConnection);
                   }
                 },
-                child: const Text('Save'),
+                child: const Text('Submit'),
               ),
+              error.isNotEmpty
+                  ? Text(
+                      error,
+                      style: const TextStyle(color: Colors.red),
+                    )
+                  : const SizedBox.shrink(),
             ],
           ),
         ),

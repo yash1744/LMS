@@ -120,7 +120,7 @@ order by SUM(LateFeeBalance) desc;
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('bookid'),
+              const Text('Book Id'),
               TextFormField(
                 controller: _bookidController,
                 validator: (value) {
@@ -131,7 +131,7 @@ order by SUM(LateFeeBalance) desc;
                 },
               ),
               const SizedBox(height: 16.0),
-              const Text('Name or Part of Name'),
+              const Text('Name / Part of Name'),
               TextFormField(
                 controller: _nameController,
                 validator: (value) {
