@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:mysql1/mysql1.dart';
 
 class Page3 extends StatefulWidget {
-
   final MySqlConnection? databaseConnection;
-  const Page3(
-      {super.key,  required this.databaseConnection});
+  const Page3({super.key, required this.databaseConnection});
 
   @override
   State<Page3> createState() => _Page3State();
@@ -24,6 +22,35 @@ class _Page3State extends State<Page3> {
     super.initState();
     fetchPublishers(widget.databaseConnection);
     // print(widget.databaseConnection);
+  }
+
+  void submit(MySqlConnection? connection) async {
+    try {
+      if (connection != null) {
+        connection.transaction((conn) async {
+          await connection.query("""
+            INSERT BOOK(Title,Book_Publisher)
+            VALUES (?,?);       
+      """, [_bookController.text, _publisherValue]);
+          await connection.query("""
+            INSERT INTO BOOK_COPIES
+            SELECT (SELECT Book_Id from BOOK b where b.Title = ?),Branch_Id,5 FROM LIBRARY_BRANCH;
+      """, [_bookController.text]);
+          await connection.query("""
+            INSERT BOOK_AUTHORS(Book_Id,Author_Name)
+            VALUES((SELECT Book_Id FROM BOOK WHERE Title = ? ) ,?);""",
+              [_bookController.text, _authorController.text]);
+        });
+        print("Success");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Book added successfully"),
+          ),
+        );
+      }
+    } on MySqlException catch (e) {
+      print(e.message);
+    }
   }
 
   void fetchPublishers(MySqlConnection? connection) async {
@@ -114,9 +141,10 @@ class _Page3State extends State<Page3> {
                     ),
                     ElevatedButton(
                       onPressed: () {
-                        print(
-                            "in add book with book name: ${_bookController.text} , author name: ${_authorController.text} and publisher name: $_publisherValue ");
-                        // Navigator.pop(context);
+                        if (_formKey.currentState!.validate()) {
+                          FocusScope.of(context).unfocus();
+                          submit(widget.databaseConnection);
+                        }
                       },
                       child: const Text('Save'),
                     ),

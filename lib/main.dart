@@ -4,6 +4,8 @@ import 'package:my_app/page3.dart';
 import 'package:my_app/page4.dart';
 import 'package:my_app/page5.dart';
 import 'package:my_app/page2.dart';
+import 'package:my_app/page6a.dart';
+import 'package:my_app/page6b.dart';
 import 'package:mysql1/mysql1.dart';
 
 // import 'package:mysql1/mysql1.dart';
@@ -198,10 +200,31 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           ),
           const SizedBox(height: 16.0),
           ListTile(
-            title: const Text('6a) Tile 6'),
+            title: const Text('6a) Check late fees for a borrower'),
+            subtitle: const Text(
+                """List for every borrower the ID, name, and if there is any lateFee balance. The user has the right to search either by a borrower ID, name, part of the name, or to run the query with no filters/criteria. T"""),
+            onTap: () {
+              // handle onTap event
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) =>
+                        Page6a(databaseConnection: _connection)),
+              );
+            },
+          ),
+          const SizedBox(height: 16.0),
+          ListTile(
+            title: const Text('6b) Tile 6'),
             subtitle: const Text('This is the content of tile 6'),
             onTap: () {
               // handle onTap event
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) =>
+                        Page6b(databaseConnection: _connection)),
+              );
             },
           ),
         ],

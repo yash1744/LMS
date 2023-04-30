@@ -1,22 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:mysql1/mysql1.dart';
 
-class Page2 extends StatefulWidget {
+class Page6b extends StatefulWidget {
   final MySqlConnection? databaseConnection;
-  const Page2({super.key, required this.databaseConnection});
+  const Page6b({super.key, required this.databaseConnection});
 
   @override
-  State<Page2> createState() => _Page2State();
+  State<Page6b> createState() => _Page6bState();
 }
 
-class _Page2State extends State<Page2> {
+class _Page6bState extends State<Page6b> {
   final _formKey = GlobalKey<FormState>();
+  final _bookidController = TextEditingController();
   final _nameController = TextEditingController();
-  final _addressController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final String _statusValue = 'Available';
-  final List<String> _statusList = ['Available', 'Reserved', 'Borrowed'];
-  late var output;
+
   @override
   void initState() {
     super.initState();
@@ -24,9 +21,9 @@ class _Page2State extends State<Page2> {
 
   @override
   void dispose() {
+    _bookidController.dispose();
     _nameController.dispose();
-    _addressController.dispose();
-    _phoneController.dispose();
+
     super.dispose();
   }
 
@@ -34,21 +31,19 @@ class _Page2State extends State<Page2> {
     try {
       if (connection != null) {
         await connection.query("""
-      INSERT INTO BORROWER(Name,Address,Phone)
+      INSERT INTO BORROWER(bookid,name,Phone)
     VALUES(?,?,?);
       """, [
+          _bookidController.text,
           _nameController.text,
-          _addressController.text,
-          _phoneController.text
         ]);
 
         var results = await connection.query("""
       SELECT Card_No from BORROWER
-    where Name= ? AND Address = ? AND Phone = ?;
+    where bookid= ? AND name = ? AND Phone = ?;
       """, [
+          _bookidController.text,
           _nameController.text,
-          _addressController.text,
-          _phoneController.text
         ]);
         var id = results.first[0].toString();
         // print(results.first[0].toString());
@@ -68,7 +63,7 @@ class _Page2State extends State<Page2> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Borrower '),
+        title: const Text('Late fee for a book '),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -77,34 +72,23 @@ class _Page2State extends State<Page2> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Name'),
+              const Text('bookid'),
+              TextFormField(
+                controller: _bookidController,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your bookid';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16.0),
+              const Text('Name or Part of Name'),
               TextFormField(
                 controller: _nameController,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your name';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16.0),
-              const Text('Address'),
-              TextFormField(
-                controller: _addressController,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your address';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16.0),
-              const Text('Phone Number'),
-              TextFormField(
-                controller: _phoneController,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your phone number';
                   }
                   return null;
                 },
