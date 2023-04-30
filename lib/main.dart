@@ -215,8 +215,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           ),
           const SizedBox(height: 16.0),
           ListTile(
-            title: const Text('6b) Tile 6'),
-            subtitle: const Text('This is the content of tile 6'),
+            title: const Text('6b) Check late fees for a Book'),
+            subtitle: const Text(
+                'List book information in the view. The user has the right either to search by the book id, books title, part of book title, or to run the query with no filters/criteria.'),
             onTap: () {
               // handle onTap event
               Navigator.push(
