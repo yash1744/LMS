@@ -29,6 +29,7 @@ class _Page3State extends State<Page3> {
   void submit(MySqlConnection? connection) async {
     setState(() {
       error = "";
+      _isLoading = true;
     });
     try {
       if (connection != null) {
@@ -52,10 +53,16 @@ class _Page3State extends State<Page3> {
           ),
         );
       }
+      setState(() {
+        _isLoading = false;
+        _bookController.clear();
+        _authorController.clear();
+      });
     } on MySqlException catch (e) {
       print(e.message);
       setState(() {
         error = "Book Title already exists";
+        _isLoading = false;
       });
     }
   }

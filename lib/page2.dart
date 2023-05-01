@@ -14,10 +14,8 @@ class _Page2State extends State<Page2> {
   final _nameController = TextEditingController();
   final _addressController = TextEditingController();
   final _phoneController = TextEditingController();
-  final String _statusValue = 'Available';
+  bool _isLoading = false;
   String error = "";
-  final List<String> _statusList = ['Available', 'Reserved', 'Borrowed'];
-  late var output;
   @override
   void initState() {
     super.initState();
@@ -33,7 +31,7 @@ class _Page2State extends State<Page2> {
 
   void submit(MySqlConnection? connection) async {
     setState(() {
-      // _isLoading = true;
+      _isLoading = true;
       error = "";
     });
     try {
@@ -64,9 +62,16 @@ class _Page2State extends State<Page2> {
               duration: const Duration(seconds: 5)),
         );
       }
+      setState(() {
+        _isLoading = false;
+        _nameController.clear();
+        _addressController.clear();
+        _phoneController.clear();
+      });
     } on MySqlException {
       setState(() {
         error = "Combination of Name, Address and Phone already exists";
+        _isLoading = false;
       });
     }
   }
@@ -79,62 +84,64 @@ class _Page2State extends State<Page2> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Name'),
-              TextFormField(
-                controller: _nameController,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your name';
-                  }
-                  return null;
-                },
+        child: _isLoading
+            ? const CircularProgressIndicator()
+            : Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Name'),
+                    TextFormField(
+                      controller: _nameController,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your name';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16.0),
+                    const Text('Address'),
+                    TextFormField(
+                      controller: _addressController,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your address';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16.0),
+                    const Text('Phone Number'),
+                    TextFormField(
+                      controller: _phoneController,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your phone number';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16.0),
+                    ElevatedButton(
+                      onPressed: () {
+                        if (_formKey.currentState!.validate()) {
+                          FocusScope.of(context).unfocus();
+                          submit(widget.databaseConnection);
+                        }
+                      },
+                      child: const Text('Submit'),
+                    ),
+                    error.isNotEmpty
+                        ? Text(
+                            error,
+                            style: const TextStyle(color: Colors.red),
+                          )
+                        : const SizedBox.shrink(),
+                  ],
+                ),
               ),
-              const SizedBox(height: 16.0),
-              const Text('Address'),
-              TextFormField(
-                controller: _addressController,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your address';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16.0),
-              const Text('Phone Number'),
-              TextFormField(
-                controller: _phoneController,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your phone number';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16.0),
-              ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    FocusScope.of(context).unfocus();
-                    submit(widget.databaseConnection);
-                  }
-                },
-                child: const Text('Submit'),
-              ),
-              error.isNotEmpty
-                  ? Text(
-                      error,
-                      style: const TextStyle(color: Colors.red),
-                    )
-                  : const SizedBox.shrink(),
-            ],
-          ),
-        ),
       ),
     );
   }

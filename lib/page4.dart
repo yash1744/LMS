@@ -15,7 +15,7 @@ class _Page4State extends State<Page4> {
   late List<List<String>> results;
   List<String?> columns = List.empty(growable: true);
   List<List<String>> rows = List.empty(growable: true);
-
+  String error = "";
   List<String> _bookList = ["None"];
   String _bookValue = "None";
 
@@ -57,34 +57,53 @@ class _Page4State extends State<Page4> {
   void getLoansPerBranch(MySqlConnection? connection) async {
     setState(() {
       _isLoading = true;
+      error = "";
+      columns = List.empty(growable: true);
+      rows = List.empty(growable: true);
     });
-    if (connection != null) {
-      var results = await connection.query("""
+    try {
+      if (connection != null) {
+        var results = await connection.query("""
 select Branch_Name as BRANCH,count(*) as COUNT from BOOK_LOANS,LIBRARY_BRANCH
 where LIBRARY_BRANCH.Branch_Id = BOOK_LOANS.Branch_Id and BOOK_LOANS.Book_Id = (
 select Book_Id from BOOK where Title = ?)
 group by Branch_Name;""", [_bookValue]);
-      if (results.isEmpty) {
-        setState(() {
-          _isLoading = false;
-        });
-        return;
-      } else {
-        columns = results.map((row) {
-          List<String?> temp =
-              row.fields.keys.map((e) => e.toString()).toList();
-          return temp;
-        }).toList()[0];
-        rows = results.map((row) {
-          print(row);
-          List<String> temp = row.map((e) => e.toString()).toList();
-          return temp;
-        }).toList();
-
-        setState(() {
-          _isLoading = false;
-        });
+        if (results.isEmpty) {
+          setState(() {
+            _isLoading = false;
+            error = "No results found";
+          });
+          return;
+        } else {
+          var columns = results.map((row) {
+            List<String?> temp =
+                row.fields.keys.map((e) => e.toString()).toList();
+            return temp;
+          }).toList()[0];
+          var rows = results.map((row) {
+            print(row);
+            List<String> temp = row.map((e) => e.toString()).toList();
+            return temp;
+          }).toList();
+          if (rows.isEmpty) {
+            setState(() {
+              _isLoading = false;
+              error = "No results found";
+            });
+          } else {
+            setState(() {
+              _isLoading = false;
+              this.columns = columns;
+              this.rows = rows;
+            });
+          }
+        }
       }
+    } catch (e) {
+      setState(() {
+        error ="No results found ";
+        _isLoading = false;
+      });
     }
   }
 
@@ -132,6 +151,12 @@ group by Branch_Name;""", [_bookValue]);
                       child: const Text('Search'),
                     ),
                     const SizedBox(height: 16.0),
+                    error.isNotEmpty
+                        ? Text(
+                            error,
+                            style: const TextStyle(color: Colors.red),
+                          )
+                        : const SizedBox.shrink(),
                     columns.isEmpty || rows.isEmpty
                         ? Container()
                         : DataTable(

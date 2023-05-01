@@ -20,6 +20,7 @@ class DateWrapper {
 class _Page5State extends State<Page5> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  bool _isLoading = false;
   final _addressController = TextEditingController();
   final _phoneController = TextEditingController();
   DateWrapper startDate = DateWrapper(DateTime.now());
@@ -57,7 +58,7 @@ class _Page5State extends State<Page5> {
 
   void submit(MySqlConnection? connection) async {
     setState(() {
-      // _isLoading = true;
+      _isLoading = true;
       error = "";
       columns = List.empty(growable: true);
       rows = List.empty(growable: true);
@@ -75,13 +76,33 @@ SELECT  bl.Card_No as Borrower_ID, lb.Branch_Name as Branch,b.Title as Book,date
         ]);
         print(results);
         var tableresults = ResultstoTable(results);
+        var columns = tableresults[0] as List<String?>;
+        var rows = tableresults[1] as List<List<String>>;
+        if (rows.isEmpty) {
+          setState(() {
+            error = "NO results found";
+            _isLoading = false;
+          });
+          return;
+        }
         setState(() {
-          columns = tableresults[0] as List<String?>;
-          rows = tableresults[1] as List<List<String>>;
+          this.columns = columns;
+          this.rows = rows;
+          _isLoading = false;
         });
       }
     } on MySqlException catch (e) {
       print(e.message);
+      setState(() {
+        error = e.message;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print(e);
+      setState(() {
+        error = "No results found";
+        _isLoading = false;
+      });
     }
   }
 
@@ -89,69 +110,79 @@ SELECT  bl.Card_No as Borrower_ID, lb.Branch_Name as Branch,b.Title as Book,date
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Borrower '),
+        title: const Text('Book loan range'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text("Start Date"),
-              ElevatedButton(
-                onPressed: () {
-                  _selectDate(context, startDate);
-                },
-                child: Text(DateFormat('MM-dd-yyyy')
-                    .format(startDate.date!)
-                    .toString()),
-              ),
-              const Text("End Date"),
-              ElevatedButton(
-                onPressed: () {
-                  _selectDate(context, endDate);
-                  
-                },
-                child: Text(
-                    DateFormat('MM-dd-yyyy').format(endDate.date!).toString()),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  submit(widget.databaseConnection);
-                  print(
-                      "${DateFormat('yyyy-MM-dd').format(startDate.date!).toString()}  ${DateFormat('yyyy-MM-dd').format(endDate.date!).toString()}");
-                },
-                child: const Text('Search'),
-              ),
-              Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: columns.isEmpty || rows.isEmpty
-                      ? Container()
-                      : DataTable(
-                          columns: columns.isEmpty
-                              ? []
-                              : columns
-                                  .map((e) => DataColumn(
-                                      label: Text(e.toString(),
-                                          style: const TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold))))
-                                  .toList(),
-                          rows: rows.isEmpty
-                              ? []
-                              : rows
-                                  .map((row) => DataRow(
-                                      cells: row
-                                          .map((item) => DataCell(Text(item)))
-                                          .toList()))
-                                  .toList()),
+        child: _isLoading
+            ? const CircularProgressIndicator()
+            : Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text("Start Date"),
+                    ElevatedButton(
+                      onPressed: () {
+                        _selectDate(context, startDate);
+                      },
+                      child: Text(DateFormat('MM-dd-yyyy')
+                          .format(startDate.date!)
+                          .toString()),
+                    ),
+                    const Text("End Date"),
+                    ElevatedButton(
+                      onPressed: () {
+                        _selectDate(context, endDate);
+                      },
+                      child: Text(DateFormat('MM-dd-yyyy')
+                          .format(endDate.date!)
+                          .toString()),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        submit(widget.databaseConnection);
+                        print(
+                            "${DateFormat('yyyy-MM-dd').format(startDate.date!).toString()}  ${DateFormat('yyyy-MM-dd').format(endDate.date!).toString()}");
+                      },
+                      child: const Text('Search'),
+                    ),
+                    error.isNotEmpty
+                        ? Text(
+                            error,
+                            style: const TextStyle(color: Colors.red),
+                          )
+                        : const SizedBox.shrink(),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: columns.isEmpty || rows.isEmpty
+                            ? Container()
+                            : DataTable(
+                                columns: columns.isEmpty
+                                    ? []
+                                    : columns
+                                        .map((e) => DataColumn(
+                                            label: Text(e.toString(),
+                                                style: const TextStyle(
+                                                    fontSize: 18,
+                                                    fontWeight:
+                                                        FontWeight.bold))))
+                                        .toList(),
+                                rows: rows.isEmpty
+                                    ? []
+                                    : rows
+                                        .map((row) => DataRow(
+                                            cells: row
+                                                .map((item) =>
+                                                    DataCell(Text(item)))
+                                                .toList()))
+                                        .toList()),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
       ),
     );
   }

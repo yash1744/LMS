@@ -64,7 +64,7 @@ class _Page1State extends State<Page1> {
 
   void submit(MySqlConnection? connection) async {
     setState(() {
-      // _isLoading = true;
+      _isLoading = true;
       error = "";
       columns = List.empty(growable: true);
       rows = List.empty(growable: true);
@@ -134,6 +134,7 @@ class _Page1State extends State<Page1> {
     fetchBranches(widget.databaseConnection);
     setState(() {
       _isLoading = false;
+      _cardController.clear();
     });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(

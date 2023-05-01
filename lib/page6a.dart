@@ -14,6 +14,9 @@ class Page6a extends StatefulWidget {
 class _Page6aState extends State<Page6a> {
   final _formKey = GlobalKey<FormState>();
   final _idController = TextEditingController();
+  bool _isLoading = false;
+  String error = "";
+
   final _nameController = TextEditingController();
   List<String?> columns = List.empty(growable: true);
   List<List<String>> rows = List.empty(growable: true);
@@ -38,13 +41,26 @@ class _Page6aState extends State<Page6a> {
       where `Card_No` =?;
       """, [_idController.text]);
         var tableresults = ResultstoTable(results);
+        var columns = tableresults[0] as List<String?>;
+        var rows = tableresults[1] as List<List<String>>;
+        if (rows.isEmpty) {
+          setState(() {
+            error = "No results found ";
+            _isLoading = false;
+          });
+          return;
+        }
         setState(() {
-          columns = tableresults[0] as List<String?>;
-          rows = tableresults[1] as List<List<String>>;
+          this.columns = columns;
+          this.rows = rows;
+          _isLoading = false;
         });
       }
-    } on MySqlException catch (e) {
-      print(e.message);
+    } catch (e) {
+      setState(() {
+        error = "No results found ";
+        _isLoading = false;
+      });
     }
   }
 
@@ -57,13 +73,25 @@ class _Page6aState extends State<Page6a> {
       where `Borrower Name` LIKE ?;
       """, ["%${_nameController.text}%"]);
         var tableresults = ResultstoTable(results);
+        var columns = tableresults[0] as List<String?>;
+        var rows = tableresults[1] as List<List<String>>;
+        if (rows.isEmpty) {
+          setState(() {
+            error = "No results found ";
+            _isLoading = false;
+          });
+        }
         setState(() {
-          columns = tableresults[0] as List<String?>;
-          rows = tableresults[1] as List<List<String>>;
+          this.columns = columns;
+          this.rows = rows;
+          _isLoading = false;
         });
       }
-    } on MySqlException catch (e) {
-      print(e.message);
+    } catch (e) {
+      setState(() {
+        error = "No results found ";
+        _isLoading = false;
+      });
     }
   }
 
@@ -76,13 +104,25 @@ class _Page6aState extends State<Page6a> {
       order by bi.LateFeeBalance DESC;
       """);
         var tableresults = ResultstoTable(results);
+        var columns = tableresults[0] as List<String?>;
+        var rows = tableresults[1] as List<List<String>>;
+        if (rows.isEmpty) {
+          setState(() {
+            error = "No results found ";
+            _isLoading = false;
+          });
+        }
         setState(() {
-          columns = tableresults[0] as List<String?>;
-          rows = tableresults[1] as List<List<String>>;
+          this.columns = columns;
+          this.rows = rows;
+          _isLoading = false;
         });
       }
-    } on MySqlException catch (e) {
-      print(e.message);
+    } catch (e) {
+      setState(() {
+        error = "No results found ";
+        _isLoading = false;
+      });
     }
   }
 
@@ -94,78 +134,92 @@ class _Page6aState extends State<Page6a> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Id'),
-              TextFormField(
-                controller: _idController,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your name';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16.0),
-              const Text('Name OR Part of Name'),
-              TextFormField(
-                controller: _nameController,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your address';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16.0),
-              ElevatedButton(
-                onPressed: () {
-                  FocusScope.of(context).unfocus();
-                  if (_idController.text.isNotEmpty) {
-                    submitUsingId(widget.databaseConnection);
-                  } else if (_nameController.text.isNotEmpty) {
-                    submitUsingName(widget.databaseConnection);
-                  } else {
-                    submitUsingNothing(widget.databaseConnection);
-                  }
-                },
-                child: const Text('Search'),
-              ),
-              Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: SingleChildScrollView(
-                      scrollDirection: Axis.vertical,
-                      child: columns.isEmpty || rows.isEmpty
-                          ? Container()
-                          : DataTable(
-                              columns: columns.isEmpty
-                                  ? []
-                                  : columns
-                                      .map((e) => DataColumn(
-                                          label: Text(e.toString(),
-                                              style: const TextStyle(
-                                                  fontSize: 18,
-                                                  fontWeight:
-                                                      FontWeight.bold))))
-                                      .toList(),
-                              rows: rows.isEmpty
-                                  ? []
-                                  : rows
-                                      .map((row) => DataRow(
-                                          cells: row
-                                              .map((item) =>
-                                                  DataCell(Text(item)))
-                                              .toList()))
-                                      .toList())),
+        child: _isLoading
+            ? const CircularProgressIndicator()
+            : Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Id'),
+                    TextFormField(
+                      controller: _idController,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your name';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16.0),
+                    const Text('Name OR Part of Name'),
+                    TextFormField(
+                      controller: _nameController,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your address';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16.0),
+                    ElevatedButton(
+                      onPressed: () {
+                        FocusScope.of(context).unfocus();
+                        setState(() {
+                          _isLoading = true;
+                          error = "";
+                          columns = List.empty();
+                          rows = List.empty();
+                        });
+                        if (_idController.text.isNotEmpty) {
+                          submitUsingId(widget.databaseConnection);
+                        } else if (_nameController.text.isNotEmpty) {
+                          submitUsingName(widget.databaseConnection);
+                        } else {
+                          submitUsingNothing(widget.databaseConnection);
+                        }
+                      },
+                      child: const Text('Search'),
+                    ),
+                    error.isNotEmpty
+                        ? Text(
+                            error,
+                            style: const TextStyle(color: Colors.red),
+                          )
+                        : const SizedBox.shrink(),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: SingleChildScrollView(
+                            scrollDirection: Axis.vertical,
+                            child: columns.isEmpty || rows.isEmpty
+                                ? Container()
+                                : DataTable(
+                                    columns: columns.isEmpty
+                                        ? []
+                                        : columns
+                                            .map((e) => DataColumn(
+                                                label: Text(e.toString(),
+                                                    style: const TextStyle(
+                                                        fontSize: 18,
+                                                        fontWeight:
+                                                            FontWeight.bold))))
+                                            .toList(),
+                                    rows: rows.isEmpty
+                                        ? []
+                                        : rows
+                                            .map((row) => DataRow(
+                                                cells: row
+                                                    .map((item) =>
+                                                        DataCell(Text(item)))
+                                                    .toList()))
+                                            .toList())),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
       ),
     );
   }
